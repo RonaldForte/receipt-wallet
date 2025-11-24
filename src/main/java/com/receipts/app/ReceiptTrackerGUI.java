@@ -41,9 +41,8 @@ public class ReceiptTrackerGUI extends Application {
         TextField searchField = new TextField();
         searchField.setPromptText("Search by store...");
         searchField.textProperty().addListener((obs, oldText, newText) -> {
-            if (newText.isEmpty()) {
-                loadReceipts();
-            } else {
+            if (newText.isEmpty()) loadReceipts();
+            else {
                 List<Receipt> filtered = receiptRepository.findByStoreNameContainingIgnoreCase(newText);
                 data.setAll(filtered);
             }
@@ -69,8 +68,8 @@ public class ReceiptTrackerGUI extends Application {
 
         VBox root = new VBox(10, searchField, table, buttons);
         root.setPadding(new Insets(10));
-
         mainScene = new Scene(root, 1000, 500);
+
         primaryStage.setTitle("Receipt Tracker");
         primaryStage.setScene(mainScene);
         primaryStage.show();
@@ -101,18 +100,15 @@ public class ReceiptTrackerGUI extends Application {
         categoryCol.setCellValueFactory(new PropertyValueFactory<>("category"));
         categoryCol.setPrefWidth(150);
 
-
         table.getColumns().setAll(storeCol, amountCol, dateCol, categoryCol);
     }
 
     private void loadReceipts() {
-
         if (data == null) {
             data = FXCollections.observableArrayList();
             table.setItems(data);
         }
-        List<Receipt> receipts = receiptRepository.findAll();
-        data.setAll(receipts);
+        data.setAll(receiptRepository.findAll());
     }
 
     private void deleteSelectedReceipt() {
@@ -153,8 +149,7 @@ public class ReceiptTrackerGUI extends Application {
                 double amount = Double.parseDouble(amountField.getText());
                 LocalDate date = datePicker.getValue();
                 String category = categoryField.getValue();
-
-                if (store.isEmpty() || date == null || category == null) 
+                if (store.isEmpty() || date == null || category == null)
                     throw new IllegalArgumentException("All fields are required");
 
                 if (receiptToEdit == null) {
@@ -194,9 +189,9 @@ public class ReceiptTrackerGUI extends Application {
         alert.setContentText(message);
         alert.showAndWait();
     }
+
     private void showDashboard(Stage stage) {
         List<Receipt> allReceipts = receiptRepository.findAll();
-
 
         ComboBox<String> storeFilter = new ComboBox<>();
         storeFilter.getItems().add("All Stores");
@@ -214,8 +209,6 @@ public class ReceiptTrackerGUI extends Application {
         toDate.setPromptText("To Date");
 
         Button applyFilter = new Button("Apply Filters");
-
-
 
         CategoryAxis xAxis = new CategoryAxis();
         xAxis.setLabel("Month");
@@ -248,7 +241,7 @@ public class ReceiptTrackerGUI extends Application {
             series.setName("Spending");
             Map<String, Double> monthlyTotals = new TreeMap<>();
             for (Receipt r : filtered) {
-                String month = r.getDate().getMonth().toString() + " " + r.getDate().getYear();
+                String month = r.getDate().getMonth() + " " + r.getDate().getYear();
                 monthlyTotals.put(month, monthlyTotals.getOrDefault(month, 0.0) + r.getAmount());
             }
             monthlyTotals.forEach((month, total) -> series.getData().add(new XYChart.Data<>(month, total)));
