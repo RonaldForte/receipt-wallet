@@ -1,50 +1,72 @@
-# === Gradle ===
 .gradle/
 build/
 out/
+bin/
+target/
 
-# Gradle wrapper JAR
+.m2/
 
+!gradle/wrapper/gradle-wrapper.jar
+gradle/wrapper/*.lock
 
-# === IDEs ===
-# IntelliJ IDEA
 .idea/
 *.iml
 *.iws
 
-# Eclipse
 .project
 .classpath
 .settings/
 
-# VS Code
 .vscode/
 
-# === OS-specific ===
-# macOS
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+.nbm/
+
 .DS_Store
-# Windows
+.AppleDouble
+.LSOverride
+
 Thumbs.db
 ehthumbs.db
 Desktop.ini
 
-# === Logs and temp files ===
+*~
+
 *.log
 *.tmp
 *.temp
 *.swp
 *.bak
+*.orig
 
-# === Java specific ===
+hs_err_pid*
+
 *.class
 *.jar
 *.war
 *.ear
 
-# === Test coverage / reports ===
+generated/
+
+*.fxml~
+*.css~
+*.xml~
+
+modules/
+runtime/
+
 coverage/
 *.exec
 *.ec
+jacoco.exec
+test-results/
+test-output/
 
-# === JavaFX / other generated files ===
-*.fxml~
+node_modules/
+npm-debug.log
+yarn-error.log
+

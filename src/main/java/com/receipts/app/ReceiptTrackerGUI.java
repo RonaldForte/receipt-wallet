@@ -5,25 +5,27 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.chart.*;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 
-public class ReceiptTrackerGUI extends Application {
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
+public class ReceiptTrackerGUI extends Application {
     private TableView<Receipt> table;
     private ObservableList<Receipt> data;
-    private ReceiptRepository receiptRepository;
+    private ReceiptService receiptService;
+    private CSVService csvService;
+    private PDFService pdfService;
     private Scene mainScene;
     public static ConfigurableApplicationContext context;
 
@@ -32,7 +34,9 @@ public class ReceiptTrackerGUI extends Application {
         context = new SpringApplicationBuilder(ReceiptTrackerApplication.class)
             .headless(false)
             .run();
-        receiptRepository = context.getBean(ReceiptRepository.class);
+        receiptService = context.getBean(ReceiptService.class);
+        csvService = context.getBean(CSVService.class);
+        pdfService = context.getBean(PDFService.class);
 
         table = new TableView<>();
         setupTableColumns();
@@ -43,7 +47,7 @@ public class ReceiptTrackerGUI extends Application {
         searchField.textProperty().addListener((obs, oldText, newText) -> {
             if (newText.isEmpty()) loadReceipts();
             else {
-                List<Receipt> filtered = receiptRepository.findByStoreNameContainingIgnoreCase(newText);
+                List<Receipt> filtered = receiptService.searchByStoreName(newText);
                 data.setAll(filtered);
             }
         });
@@ -63,7 +67,27 @@ public class ReceiptTrackerGUI extends Application {
         Button dashboardButton = new Button("Show Dashboard");
         dashboardButton.setOnAction(e -> showDashboard(primaryStage));
 
-        HBox buttons = new HBox(10, addButton, editButton, deleteButton, dashboardButton);
+        Button exportCSVButton = new Button("Export CSV");
+        exportCSVButton.setOnAction(e -> {
+            try {
+                csvService.export(new ArrayList<>(data));
+                showInfoAlert("CSV Exported", "receipts.csv was created successfully!");
+            } catch (IOException ex) {
+                showErrorAlert("CSV Export Error", ex.getMessage());
+            }
+        });
+
+        Button exportPDFButton = new Button("Export PDF");
+        exportPDFButton.setOnAction(e -> {
+            try {
+                pdfService.generate(new ArrayList<>(data));
+                showInfoAlert("PDF Exported", "receipts.pdf was created successfully!");
+            } catch (Exception ex) {
+                showErrorAlert("PDF Export Error", ex.getMessage());
+            }
+        });
+
+        HBox buttons = new HBox(10, addButton, editButton, deleteButton, dashboardButton, exportCSVButton, exportPDFButton);
         buttons.setPadding(new Insets(5));
 
         VBox root = new VBox(10, searchField, table, buttons);
@@ -108,13 +132,13 @@ public class ReceiptTrackerGUI extends Application {
             data = FXCollections.observableArrayList();
             table.setItems(data);
         }
-        data.setAll(receiptRepository.findAll());
+        data.setAll(receiptService.getAllReceipts());
     }
 
     private void deleteSelectedReceipt() {
         Receipt selected = table.getSelectionModel().getSelectedItem();
         if (selected != null) {
-            receiptRepository.delete(selected);
+            receiptService.deleteReceipt(selected.getId());
             data.remove(selected);
         }
     }
@@ -154,14 +178,14 @@ public class ReceiptTrackerGUI extends Application {
 
                 if (receiptToEdit == null) {
                     Receipt newReceipt = new Receipt(store, amount, date, category);
-                    receiptRepository.save(newReceipt);
+                    receiptService.saveReceipt(newReceipt);
                     data.add(newReceipt);
                 } else {
                     receiptToEdit.setStoreName(store);
                     receiptToEdit.setAmount(amount);
                     receiptToEdit.setDate(date);
                     receiptToEdit.setCategory(category);
-                    receiptRepository.save(receiptToEdit);
+                    receiptService.saveReceipt(receiptToEdit);
                     table.refresh();
                 }
                 formStage.close();
@@ -190,97 +214,17 @@ public class ReceiptTrackerGUI extends Application {
         alert.showAndWait();
     }
 
+    private void showInfoAlert(String header, String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Info");
+        alert.setHeaderText(header);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
     private void showDashboard(Stage stage) {
-        List<Receipt> allReceipts = receiptRepository.findAll();
-
-        ComboBox<String> storeFilter = new ComboBox<>();
-        storeFilter.getItems().add("All Stores");
-        storeFilter.getItems().addAll(allReceipts.stream().map(Receipt::getStoreName).distinct().sorted().toList());
-        storeFilter.setValue("All Stores");
-
-        ComboBox<String> categoryFilter = new ComboBox<>();
-        categoryFilter.getItems().add("All Categories");
-        categoryFilter.getItems().addAll(allReceipts.stream().map(Receipt::getCategory).distinct().sorted().toList());
-        categoryFilter.setValue("All Categories");
-
-        DatePicker fromDate = new DatePicker();
-        fromDate.setPromptText("From Date");
-        DatePicker toDate = new DatePicker();
-        toDate.setPromptText("To Date");
-
-        Button applyFilter = new Button("Apply Filters");
-
-        CategoryAxis xAxis = new CategoryAxis();
-        xAxis.setLabel("Month");
-        NumberAxis yAxis = new NumberAxis();
-        yAxis.setLabel("Total Spent");
-        BarChart<String, Number> barChart = new BarChart<>(xAxis, yAxis);
-        barChart.setTitle("Monthly Spending");
-
-        PieChart storePie = new PieChart();
-        storePie.setTitle("Spending by Store");
-
-        PieChart categoryPie = new PieChart();
-        categoryPie.setTitle("Spending by Category");
-
-        Runnable updateCharts = () -> {
-            String selectedStore = storeFilter.getValue();
-            String selectedCategory = categoryFilter.getValue();
-            LocalDate from = fromDate.getValue();
-            LocalDate to = toDate.getValue();
-
-            List<Receipt> filtered = allReceipts.stream()
-                .filter(r -> (selectedStore.equals("All Stores") || r.getStoreName().equals(selectedStore)) &&
-                    (selectedCategory.equals("All Categories") || r.getCategory().equals(selectedCategory)) &&
-                    (from == null || !r.getDate().isBefore(from)) &&
-                    (to == null || !r.getDate().isAfter(to)))
-                .toList();
-
-            barChart.getData().clear();
-            XYChart.Series<String, Number> series = new XYChart.Series<>();
-            series.setName("Spending");
-            Map<String, Double> monthlyTotals = new TreeMap<>();
-            for (Receipt r : filtered) {
-                String month = r.getDate().getMonth() + " " + r.getDate().getYear();
-                monthlyTotals.put(month, monthlyTotals.getOrDefault(month, 0.0) + r.getAmount());
-            }
-            monthlyTotals.forEach((month, total) -> series.getData().add(new XYChart.Data<>(month, total)));
-            barChart.getData().add(series);
-
-            storePie.getData().clear();
-            Map<String, Double> storeTotals = new HashMap<>();
-            for (Receipt r : filtered) {
-                storeTotals.put(r.getStoreName(), storeTotals.getOrDefault(r.getStoreName(), 0.0) + r.getAmount());
-            }
-            storeTotals.forEach((store, total) -> storePie.getData().add(new PieChart.Data(store, total)));
-
-            categoryPie.getData().clear();
-            Map<String, Double> categoryTotals = new HashMap<>();
-            for (Receipt r : filtered) {
-                categoryTotals.put(r.getCategory(), categoryTotals.getOrDefault(r.getCategory(), 0.0) + r.getAmount());
-            }
-            categoryTotals.forEach((cat, total) -> categoryPie.getData().add(new PieChart.Data(cat, total)));
-        };
-
-        applyFilter.setOnAction(e -> updateCharts.run());
-        updateCharts.run();
-
-        Button backButton = new Button("Back");
-        backButton.setOnAction(e -> stage.setScene(mainScene));
-
-        HBox filterBox = new HBox(10,
-            new Label("Store:"), storeFilter,
-            new Label("Category:"), categoryFilter,
-            new Label("From:"), fromDate,
-            new Label("To:"), toDate,
-            applyFilter);
-        filterBox.setPadding(new Insets(5));
-
-        VBox layout = new VBox(10, filterBox, new HBox(20, barChart, storePie, categoryPie), backButton);
-        layout.setPadding(new Insets(10));
-
-        Scene dashboardScene = new Scene(layout, 1000, 600);
-        stage.setScene(dashboardScene);
+        Dashboard dashboard = new Dashboard(receiptService.getAllReceipts());
+        dashboard.show();
     }
 
     public static void main(String[] args) {
