@@ -1,0 +1,47 @@
+plugins {
+	id 'java'
+	id 'application'
+	id 'org.springframework.boot' version '4.0.0'
+	id 'io.spring.dependency-management' version '1.1.7'
+	id 'org.openjfx.javafxplugin' version '0.0.14'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+description = 'Demo project for Spring Boot'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(24)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+javafx {
+  version = "24.0.1"
+  modules = [ 'javafx.controls', 'javafx.fxml' ]
+}
+
+
+dependencies {
+	implementation 'org.openjfx:javafx-controls:24.0.1'
+  implementation 'org.openjfx:javafx-fxml:24.0.1'
+
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	runtimeOnly 'org.postgresql:postgresql'
+	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+application {
+  mainClass = 'com.receipts.app.ReceiptTrackerGUI'
+}
