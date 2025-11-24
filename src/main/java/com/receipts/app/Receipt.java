@@ -4,6 +4,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
+import java.time.LocalDate;
+
 
 @Entity
 public class Receipt {
@@ -13,15 +15,17 @@ public class Receipt {
 
   private String storeName;
   private double amount;
-  private String date;
+  private LocalDate date;
+  private String category;
 
   public Receipt(){
   }
 
-  public Receipt(String storeName, double amount, String date){
+  public Receipt(String storeName, double amount, LocalDate date, String category){
     this.storeName = storeName;
     this.amount = amount;
     this.date = date;
+    this.category = category;
   }
 
   public Long getId() {
@@ -48,16 +52,24 @@ public class Receipt {
     this.amount = amount;
   }
 
-  public String getDate() {
+  public LocalDate getDate() {
     return date;
   }
 
-  public void setDate(String date) {
+  public void setDate(LocalDate date) {
     this.date = date;
   }
 
   @Override
   public String toString() {
     return "Receipt [id=" + id + ", storeName=" + storeName + ", amount=" + amount + ", date=" + date + "]";
+  }
+
+  public String getCategory() {
+    return category;
+  }
+
+  public void setCategory(String category) {
+    this.category = category;
   }
 }
