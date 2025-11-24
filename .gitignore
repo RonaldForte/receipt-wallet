@@ -1,0 +1,50 @@
+# === Gradle ===
+.gradle/
+build/
+out/
+
+# Gradle wrapper JAR
+gradle/wrapper/gradle-wrapper.jar
+
+# === IDEs ===
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# VS Code
+.vscode/
+
+# === OS-specific ===
+# macOS
+.DS_Store
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# === Logs and temp files ===
+*.log
+*.tmp
+*.temp
+*.swp
+*.bak
+
+# === Java specific ===
+*.class
+*.jar
+*.war
+*.ear
+
+# === Test coverage / reports ===
+coverage/
+*.exec
+*.ec
+
+# === JavaFX / other generated files ===
+*.fxml~
