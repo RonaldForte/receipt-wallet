@@ -48,6 +48,13 @@ Uses H2 embedded database, meaning:
 
 - Clean and self-contained
 
+## 🚀 Download
+Choose the JAR for your OS from the Releases page:
+
+- macOS: ReceiptTracker-mac-1.0.0.jar  
+- Windows: ReceiptTracker-win-1.0.0.jar  
+- Linux: Not Supported Yet!
+
 ## 🚀 How to Run
 There are 2 ways!
 
@@ -63,7 +70,7 @@ The app will launch immediately!
 
 OR
 
-1. Go to the Releases page and download the latest receipt-tracker-all.jar file.
+1. Go to the Releases page and download the latest receipt-tracker-all.jar file for your os.
 
 2. Make sure you have Java installed. Receipt Tracker requires Java 24 or newer. You can check your version by running the following command:
   `java -version`

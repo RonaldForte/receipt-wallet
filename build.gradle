@@ -21,15 +21,14 @@ repositories {
 }
 
 javafx {
-  version = "24.0.1"
-  modules = [ 'javafx.controls', 'javafx.fxml' ]
+	version = "24.0.1"
+	modules = ['javafx.controls', 'javafx.fxml']
 }
-
 
 dependencies {
 	implementation 'com.itextpdf:itextpdf:5.5.13.3'
 	implementation 'org.openjfx:javafx-controls:24.0.1'
-  implementation 'org.openjfx:javafx-fxml:24.0.1'
+	implementation 'org.openjfx:javafx-fxml:24.0.1'
 	implementation 'com.itextpdf:itext7-core:7.2.6'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
@@ -44,22 +43,35 @@ tasks.named('test') {
 }
 
 application {
-  mainClass = 'com.receipts.app.ReceiptTrackerGUI'
+	mainClass = 'com.receipts.app.ReceiptTrackerGUI'
 }
 
-tasks.register('fatJar', Jar) {
-    archiveBaseName.set("ReceiptTracker")
-    archiveVersion.set("1.0.0")
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    manifest {
-      attributes(
-        'Main-Class': application.mainClass.get()
-      )
-    }
-    from(sourceSets.main.output)
-    dependsOn(configurations.runtimeClasspath)
-    from {
-      configurations.runtimeClasspath.filter { it.name.endsWith('jar') }.collect { zipTree(it) }
-    }
+tasks.register('fatJarMac', Jar) {
+	archiveBaseName.set("ReceiptTracker")
+	archiveVersion.set("1.0.0-mac")
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+	manifest {
+		attributes('Main-Class': application.mainClass.get())
+	}
+	from(sourceSets.main.output)
+	dependsOn(configurations.runtimeClasspath)
+	from {
+		configurations.runtimeClasspath.filter { it.name.endsWith('jar') }.collect { zipTree(it) }
+	}
+	exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
 }
 
+tasks.register('fatJarWin', Jar) {
+	archiveBaseName.set("ReceiptTracker")
+	archiveVersion.set("1.0.0-win")
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+	manifest {
+		attributes('Main-Class': application.mainClass.get())
+	}
+	from(sourceSets.main.output)
+	dependsOn(configurations.runtimeClasspath)
+	from {
+		configurations.runtimeClasspath.filter { it.name.endsWith('jar') }.collect { zipTree(it) }
+	}
+	exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+}
